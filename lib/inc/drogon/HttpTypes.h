@@ -15,8 +15,9 @@
 #include <atomic>
 #include <thread>
 #include <iostream>
-#include <drogon/utils/string_view.h>
+#include <string_view>
 #include <trantor/utils/LogStream.h>
+#include <drogon/utils/Utilities.h>
 
 namespace drogon
 {
@@ -102,28 +103,74 @@ enum ContentType
     CT_TEXT_PLAIN,
     CT_TEXT_HTML,
     CT_APPLICATION_X_FORM,
-    CT_APPLICATION_X_JAVASCRIPT,
+    CT_APPLICATION_X_JAVASCRIPT [[deprecated("use CT_TEXT_JAVASCRIPT")]],
+    CT_TEXT_JAVASCRIPT,
     CT_TEXT_CSS,
-    CT_TEXT_XML,
-    CT_APPLICATION_XML,
+    CT_TEXT_CSV,
+    CT_TEXT_XML,         // suggests human readable xml
+    CT_APPLICATION_XML,  // suggest machine-to-machine xml
     CT_TEXT_XSL,
     CT_APPLICATION_WASM,
     CT_APPLICATION_OCTET_STREAM,
-    CT_APPLICATION_X_FONT_TRUETYPE,
-    CT_APPLICATION_X_FONT_OPENTYPE,
     CT_APPLICATION_FONT_WOFF,
     CT_APPLICATION_FONT_WOFF2,
-    CT_APPLICATION_VND_MS_FONTOBJ,
+    CT_APPLICATION_GZIP,
+    CT_APPLICATION_JAVA_ARCHIVE,
     CT_APPLICATION_PDF,
-    CT_IMAGE_SVG_XML,
-    CT_IMAGE_PNG,
-    CT_IMAGE_WEBP,
+    CT_APPLICATION_MSWORD,
+    CT_APPLICATION_MSWORDX,
+    CT_APPLICATION_VND_MS_FONTOBJ,
+    CT_APPLICATION_VND_RAR,
+    CT_APPLICATION_XHTML,
+    CT_APPLICATION_X_7Z,
+    CT_APPLICATION_X_BZIP,
+    CT_APPLICATION_X_BZIP2,
+    CT_APPLICATION_X_HTTPD_PHP,
+    CT_APPLICATION_X_FONT_TRUETYPE,
+    CT_APPLICATION_X_FONT_OPENTYPE,
+    CT_APPLICATION_X_TAR,
+    CT_APPLICATION_X_TGZ,
+    CT_APPLICATION_X_XZ,
+    CT_APPLICATION_ZIP,
+    CT_AUDIO_AAC,
+    CT_AUDIO_AC3,
+    CT_AUDIO_AIFF,
+    CT_AUDIO_FLAC,
+    CT_AUDIO_MATROSKA,
+    CT_AUDIO_MPEG,
+    CT_AUDIO_MPEG4,
+    CT_AUDIO_OGG,
+    CT_AUDIO_WAVE,
+    CT_AUDIO_WEBM,
+    CT_AUDIO_X_APE,
+    CT_AUDIO_X_MS_WMA,
+    CT_AUDIO_X_TTA,
+    CT_AUDIO_X_WAVPACK,
+    CT_IMAGE_APNG,
     CT_IMAGE_AVIF,
-    CT_IMAGE_JPG,
-    CT_IMAGE_GIF,
-    CT_IMAGE_XICON,
-    CT_IMAGE_ICNS,
     CT_IMAGE_BMP,
+    CT_IMAGE_GIF,
+    CT_IMAGE_ICNS,
+    CT_IMAGE_JPG,
+    CT_IMAGE_JP2,
+    CT_IMAGE_PNG,
+    CT_IMAGE_SVG_XML,
+    CT_IMAGE_TIFF,
+    CT_IMAGE_WEBP,
+    CT_IMAGE_X_MNG,
+    CT_IMAGE_X_TGA,
+    CT_IMAGE_XICON,
+    CT_VIDEO_APG,
+    CT_VIDEO_AV1,
+    CT_VIDEO_QUICKTIME,
+    CT_VIDEO_MATROSKA,
+    CT_VIDEO_MP4,
+    CT_VIDEO_MPEG,
+    CT_VIDEO_MPEG2TS,
+    CT_VIDEO_OGG,
+    CT_VIDEO_WEBM,
+    CT_VIDEO_X_M4V,
+    CT_VIDEO_X_MSVIDEO,
     CT_MULTIPART_FORM_DATA,
     CT_CUSTOM
 };
@@ -160,6 +207,7 @@ enum class ReqResult
     Timeout,
     HandshakeError,
     InvalidCertificate,
+    EncryptionFailure,
 };
 
 enum class WebSocketMessageType
@@ -172,7 +220,7 @@ enum class WebSocketMessageType
     Unknown
 };
 
-inline string_view to_string_view(drogon::ReqResult result)
+inline std::string_view to_string_view(drogon::ReqResult result)
 {
     switch (result)
     {
@@ -190,6 +238,8 @@ inline string_view to_string_view(drogon::ReqResult result)
             return "Handshake error";
         case ReqResult::InvalidCertificate:
             return "Invalid certificate";
+        case ReqResult::EncryptionFailure:
+            return "Unrecoverable encryption failure";
         default:
             return "Unknown error";
     }
@@ -197,7 +247,8 @@ inline string_view to_string_view(drogon::ReqResult result)
 
 inline std::string to_string(drogon::ReqResult result)
 {
-    return to_string_view(result).data();
+    auto sv = to_string_view(result);
+    return std::string(sv.data(), sv.size());
 }
 
 inline std::ostream &operator<<(std::ostream &out, drogon::ReqResult result)
@@ -210,4 +261,34 @@ inline trantor::LogStream &operator<<(trantor::LogStream &out,
 {
     return out << to_string_view(result);
 }
+
+inline std::string_view to_string_view(drogon::HttpMethod method)
+{
+    switch (method)
+    {
+        case drogon::HttpMethod::Get:
+            return "GET";
+        case drogon::HttpMethod::Post:
+            return "POST";
+        case drogon::HttpMethod::Head:
+            return "HEAD";
+        case drogon::HttpMethod::Put:
+            return "PUT";
+        case drogon::HttpMethod::Delete:
+            return "DELETE";
+        case drogon::HttpMethod::Options:
+            return "OPTIONS";
+        case drogon::HttpMethod::Patch:
+            return "PATCH";
+        default:
+            return "INVALID";
+    }
+}
+
+inline std::string to_string(drogon::HttpMethod method)
+{
+    auto sv = to_string_view(method);
+    return std::string(sv.data(), sv.size());
+}
+
 }  // namespace drogon

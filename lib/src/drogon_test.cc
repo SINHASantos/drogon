@@ -15,7 +15,7 @@ namespace internal
 std::mutex mtxRegister;
 std::mutex mtxTestStats;
 bool testHasPrinted = false;
-std::set<Case*> registeredTests;
+std::set<Case *> registeredTests;
 std::promise<void> allTestRan;
 std::atomic<size_t> numAssertions;
 std::atomic<size_t> numCorrectAssertions;
@@ -23,13 +23,13 @@ size_t numTestCases;
 std::atomic<size_t> numFailedTestCases;
 bool printSuccessfulTests;
 
-void registerCase(Case* test)
+void registerCase(Case *test)
 {
     std::unique_lock<std::mutex> l(mtxRegister);
     registeredTests.insert(test);
 }
 
-void unregisterCase(Case* test)
+void unregisterCase(Case *test)
 {
     std::unique_lock<std::mutex> l(mtxRegister);
     registeredTests.erase(test);
@@ -38,14 +38,14 @@ void unregisterCase(Case* test)
         allTestRan.set_value();
 }
 
-static std::string leftpad(const std::string& str, size_t len)
+static std::string leftpad(const std::string &str, size_t len)
 {
     if (len <= str.size())
         return str;
     return std::string(len - str.size(), ' ') + str;
 }
 
-std::string prettifyString(const string_view sv, size_t maxLength)
+std::string prettifyString(const std::string_view sv, size_t maxLength)
 {
     if (sv.size() <= maxLength)
         return "\"" + escapeString(sv) + "\"";
@@ -56,15 +56,15 @@ std::string prettifyString(const string_view sv, size_t maxLength)
 
 }  // namespace internal
 
-static void printHelp(string_view argv0)
+static void printHelp(std::string_view argv0)
 {
     print() << "A Drogon Test application:\n\n"
             << "Usage: " << argv0 << " [options]\n"
             << "options:\n"
-            << "    -r        Run a specific test\n"
-            << "    -s        Print successful tests\n"
-            << "    -l        List avaliable tests\n"
-            << "    -h        Print this help message\n";
+            << "    -r            Run a specific test\n"
+            << "    -s            Print successful tests\n"
+            << "    -l            List available tests\n"
+            << "    -h | --help   Print this help message\n";
 }
 
 void printTestStats()
@@ -136,7 +136,7 @@ void printTestStats()
     internal::testHasPrinted = true;
 }
 
-int run(int argc, char** argv)
+int run(int argc, char **argv)
 {
     internal::numCorrectAssertions = 0;
     internal::numAssertions = 0;
@@ -148,38 +148,55 @@ int run(int argc, char** argv)
     bool listTests = false;
     for (int i = 1; i < argc; i++)
     {
-        std::string param = argv[i];
-        if (param == "-r" && i + 1 < argc)
+        const std::string param = argv[i];
+        if (param == "-r")
         {
+            if (!targetTest.empty())
+            {
+                printErr() << "Only one test can be specified to run\n";
+                exit(1);
+            }
+            else if (i + 1 >= argc)
+            {
+                printErr() << "Missing test name after -r.\n";
+                exit(1);
+            }
+
             targetTest = argv[i + 1];
             i++;
         }
-        if (param == "-h")
+        else if (param == "-h" || param == "--help")
         {
             printHelp(argv[0]);
             exit(0);
         }
-        if (param == "-s")
+        else if (param == "-s")
         {
             internal::printSuccessfulTests = true;
         }
-        if (param == "-l")
+        else if (param == "-l")
         {
             listTests = true;
+        }
+        else
+        {
+            printErr() << "Unknown parameter: " << param << "\n";
+            printHelp(argv[0]);
+            exit(1);
         }
     }
     auto classNames = DrClassMap::getAllClassName();
 
     if (listTests)
     {
-        print() << "Avaliable Tests:\n";
-        for (const auto& name : classNames)
+        print() << "Available Tests:\n";
+        for (const auto &name : classNames)
         {
             if (name.find(DROGON_TESTCASE_PREIX_STR_) == 0)
             {
                 auto test =
                     std::unique_ptr<DrObjectBase>(DrClassMap::newObject(name));
-                auto ptr = dynamic_cast<TestCase*>(test.get());
+                auto ptr = dynamic_cast<TestCase *>(test.get());
                 if (ptr == nullptr)
                     continue;
                 print() << "  " << ptr->name() << "\n";
@@ -190,9 +207,9 @@ int run(int argc, char** argv)
 
     std::vector<std::shared_ptr<TestCase>> testCases;
     // NOTE: Registering a dummy case prevents the test-end signal to be
-    // emited too early as there's always an case that hasn't finish
+    // emitted too early as there's always an case that hasn't finish
     std::shared_ptr<Case> dummyCase = std::make_shared<Case>("__dummy_dummy_");
-    for (const auto& name : classNames)
+    for (const auto &name : classNames)
     {
         if (name.find(DROGON_TESTCASE_PREIX_STR_) == 0)
         {

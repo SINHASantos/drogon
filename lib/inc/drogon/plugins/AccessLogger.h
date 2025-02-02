@@ -26,6 +26,7 @@ namespace plugin
       "name": "drogon::plugin::AccessLogger",
       "dependencies": [],
       "config": {
+            "use_spdlog": false,
             "log_path": "./",
             "log_format": "",
             "log_file": "access.log",
@@ -68,6 +69,8 @@ namespace plugin
  * "$request_date $method $url [$body_bytes_received] ($remote_addr -
  * $local_addr) $status $body_bytes_sent $processing_time" is applied.
  *
+ * use_spdlog: log using spdlog, disabled by default.
+ *
  * log_path: Log file path, empty by default,in which case,logs are output to
  * the regular log file (or stdout based on the log configuration).
  *
@@ -77,12 +80,15 @@ namespace plugin
  * log_size_limit: 0 bytes by default, when the log file size reaches
  * "log_size_limit", the log file is switched. Zero value means never switch
  *
+ * max_files: 0 by default, when the number of old log files exceeds max_files,
+ * the oldest log file will be deleted. 0 means never delete.
+ *
  * log_index: The index of log output, 0 by default.
  *
  * show_microseconds: Whether print microsecond in time. True by default.
  *
  * custom_time_format: Provide a custom format for time. If not provided or
- * empty, the default format is "%Y%m%d %H:%M:%S", with microseonds followed if
+ * empty, the default format is "%Y%m%d %H:%M:%S", with microseconds followed if
  * show_microseconds is true. For detailed information about formats, please
  * refer to cpp reference about strftime().
  *
@@ -99,6 +105,7 @@ class DROGON_EXPORT AccessLogger : public drogon::Plugin<AccessLogger>
     AccessLogger()
     {
     }
+
     void initAndStart(const Json::Value &config) override;
     void shutdown() override;
 
